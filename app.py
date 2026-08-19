@@ -10,20 +10,28 @@ Orchestrates the full RAG pipeline:
 
 Run with:
     python app.py              # Normal mode
-    python app.py --debug      # Debug mode (shows retrieved context chunks)
+    python app.py --debug      # Show retrieved context chunks per query
+    python app.py --rebuild    # Force rebuild of FAISS index
+
+Special commands inside the chat loop:
+    !help     — Show available commands
+    !history  — Print this session's Q&A history
+    !stats    — Show vector store statistics
+    !clear    — Clear conversation history
+    exit/quit — Exit the assistant
 """
 
 import argparse
 import logging
 import os
 import sys
+import time
 
 from dotenv import load_dotenv
 
-# Local modules
 from embeddings import chunk_text
 from vectorstore import FAISSVectorStore
-from rag import initialise_gemini, generate_answer
+from rag import initialise_gemini, generate_answer, ConversationHistory
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -33,121 +41,123 @@ KNOWLEDGE_FILE: str = os.path.join(BASE_DIR, "knowledge.txt")
 INDEX_FILE: str = os.path.join(BASE_DIR, "faiss_store", "index.faiss")
 CHUNKS_FILE: str = os.path.join(BASE_DIR, "faiss_store", "chunks.json")
 
-TOP_K: int = 3          # Number of context chunks to retrieve per query.
-CHUNK_SIZE: int = 500   # Characters per chunk.
-CHUNK_OVERLAP: int = 50 # Overlap characters between consecutive chunks.
+TOP_K: int = 3
+CHUNK_SIZE: int = 500
+CHUNK_OVERLAP: int = 50
 
-# ---------------------------------------------------------------------------
-# Logging setup
-# ---------------------------------------------------------------------------
 logging.basicConfig(
-    level=logging.WARNING,   # Suppress verbose INFO in normal mode.
+    level=logging.WARNING,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# ANSI colour helpers (no external deps)
+# ---------------------------------------------------------------------------
+_RESET  = "\033[0m"
+_BOLD   = "\033[1m"
+_CYAN   = "\033[96m"
+_GREEN  = "\033[92m"
+_YELLOW = "\033[93m"
+_RED    = "\033[91m"
+_BLUE   = "\033[94m"
+_DIM    = "\033[2m"
+
+
+def _c(text: str, *codes: str) -> str:
+    """Wrap text in ANSI codes if the terminal supports colour."""
+    if not sys.stdout.isatty():
+        return text
+    return "".join(codes) + text + _RESET
+
 
 # ---------------------------------------------------------------------------
-# Utility helpers
+# UI helpers
 # ---------------------------------------------------------------------------
 
 def _print_banner() -> None:
-    """Print a welcoming banner to the terminal."""
-    banner = """
+    print(_c("""
 ╔══════════════════════════════════════════════════════════════╗
-║          🤖  ACME CORP — AI FAQ ASSISTANT  🤖               ║
-║     Powered by Google Gemini + FAISS Vector Search          ║
+║       🤖  ACME CORP — AI FAQ ASSISTANT  🤖                  ║
+║    Powered by Google Gemini + FAISS Vector Search           ║
 ╠══════════════════════════════════════════════════════════════╣
-║  Ask me anything about company policies, HR, benefits,      ║
-║  travel reimbursement, equipment, or code of conduct.       ║
-║                                                             ║
-║  Commands:  exit | quit  →  close the assistant             ║
+║  Ask about policies, HR, benefits, travel & more.           ║
+║  Type  !help  to see all commands.                          ║
 ╚══════════════════════════════════════════════════════════════╝
-"""
-    print(banner)
+""", _CYAN, _BOLD))
 
 
 def _print_divider() -> None:
-    print("\n" + "─" * 65 + "\n")
+    print(_c("\n" + "─" * 65 + "\n", _DIM))
 
 
-def _get_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="AI FAQ Assistant — RAG chatbot powered by Gemini + FAISS."
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug mode: shows retrieved context chunks per query.",
-    )
-    parser.add_argument(
-        "--rebuild",
-        action="store_true",
-        help="Force rebuild of the FAISS index even if a cache exists.",
-    )
-    return parser.parse_args()
+def _print_help() -> None:
+    print(_c("""
+  Commands
+  ──────────────────────────────────────
+  !help     Show this help message
+  !history  Print session Q&A history
+  !stats    Show vector index statistics
+  !clear    Clear conversation history
+  exit/quit Close the assistant
+""", _CYAN))
 
 
 # ---------------------------------------------------------------------------
-# Index initialisation
+# Vector store initialisation
 # ---------------------------------------------------------------------------
 
 def initialise_vector_store(rebuild: bool = False) -> FAISSVectorStore:
     """
-    Load the FAISS index from cache or build it from knowledge.txt.
+    Load the FAISS index from cache, or build it fresh from knowledge.txt.
 
     Args:
-        rebuild: If True, skip cache and rebuild the index from scratch.
+        rebuild: Force a fresh build even if a cache exists.
 
     Returns:
         A ready-to-use FAISSVectorStore instance.
 
     Raises:
-        FileNotFoundError: If knowledge.txt is missing when rebuilding.
-        RuntimeError:      If the index build fails.
+        FileNotFoundError: If knowledge.txt is missing.
+        ValueError:        If knowledge.txt is empty.
+        RuntimeError:      If embedding or index build fails.
     """
     store = FAISSVectorStore()
 
-    # Attempt to load cached index unless rebuild is forced.
     if not rebuild and store.load(INDEX_FILE, CHUNKS_FILE):
-        print("✅  FAISS index loaded from cache.\n")
+        print(_c("  FAISS index loaded from cache.\n", _GREEN))
         return store
 
-    # Read the knowledge base.
     if not os.path.isfile(KNOWLEDGE_FILE):
         raise FileNotFoundError(
             f"Knowledge base not found: '{KNOWLEDGE_FILE}'. "
             "Ensure knowledge.txt is in the project root."
         )
 
-    print("📄  Reading knowledge base from knowledge.txt …")
+    print(_c("  Reading knowledge.txt ...", _YELLOW))
     with open(KNOWLEDGE_FILE, "r", encoding="utf-8") as fp:
         raw_text = fp.read()
 
     if not raw_text.strip():
         raise ValueError("knowledge.txt is empty. Add FAQ content and retry.")
 
-    # Chunk the text.
-    print("✂️   Chunking text …")
+    print(_c("  Chunking text ...", _YELLOW))
     chunks = chunk_text(raw_text, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
-    print(f"     → {len(chunks)} chunks created.")
+    print(_c(f"  {len(chunks)} chunks created.\n", _GREEN))
 
-    # Build the FAISS index (this makes embedding API calls).
-    print("🔢  Generating embeddings & building FAISS index …")
-    print("     (This may take ~30–60 seconds on first run.)\n")
+    print(_c("  Generating embeddings & building FAISS index ...", _YELLOW))
+    print(_c("  (First run: ~30-60 seconds depending on API speed)\n", _DIM))
     store.build_index(chunks)
 
-    # Persist to disk.
     os.makedirs(os.path.dirname(INDEX_FILE), exist_ok=True)
     store.save(INDEX_FILE, CHUNKS_FILE)
-    print("💾  Index saved to disk for future runs.\n")
+    print(_c("\n  Index saved to disk for future runs.\n", _GREEN))
 
     return store
 
 
 # ---------------------------------------------------------------------------
-# Main interactive loop
+# Chat loop
 # ---------------------------------------------------------------------------
 
 def run_chat_loop(
@@ -156,58 +166,111 @@ def run_chat_loop(
     debug: bool = False,
 ) -> None:
     """
-    Run the interactive CLI question-answering loop.
+    Run the interactive CLI question-answering loop with special commands,
+    ANSI colours, response timing, and multi-turn conversation history.
 
     Args:
-        store: Initialised FAISSVectorStore for context retrieval.
-        model: Initialised Gemini GenerativeModel for answer generation.
-        debug: If True, print the retrieved context chunks before the answer.
+        store: Initialised FAISSVectorStore.
+        model: Initialised Gemini GenerativeModel.
+        debug: If True, display retrieved context chunks before each answer.
     """
+    history = ConversationHistory(max_turns=5)
+    session_log: list[tuple[str, str]] = []  # (question, answer) pairs
+    question_count = 0
+
     _print_banner()
 
     while True:
         try:
-            user_input = input("❓ Your question: ").strip()
+            user_input = input(_c("❓ Question: ", _CYAN, _BOLD)).strip()
         except (EOFError, KeyboardInterrupt):
-            print("\n\n👋  Goodbye! Have a great day.")
+            print(_c("\n\n  Goodbye! Have a great day.\n", _GREEN))
             break
 
-        # Handle exit commands.
+        # ---- Special commands -----------------------------------------
         if user_input.lower() in {"exit", "quit", "q", "bye"}:
-            print("\n👋  Goodbye! Have a great day.")
+            print(_c("\n  Goodbye! Have a great day.\n", _GREEN))
             break
 
-        # Skip empty input.
         if not user_input:
-            print("⚠️  Please enter a question.\n")
+            print(_c("  Please enter a question or type !help.\n", _YELLOW))
             continue
 
+        if user_input.lower() == "!help":
+            _print_help()
+            continue
+
+        if user_input.lower() == "!clear":
+            history.clear()
+            session_log.clear()
+            question_count = 0
+            print(_c("  Conversation history cleared.\n", _GREEN))
+            continue
+
+        if user_input.lower() == "!stats":
+            stats = store.get_stats()
+            print(_c("\n  Vector Store Statistics", _CYAN, _BOLD))
+            for key, val in stats.items():
+                print(f"    {_c(key, _DIM)}: {val}")
+            print()
+            continue
+
+        if user_input.lower() == "!history":
+            if not session_log:
+                print(_c("  No questions asked yet this session.\n", _YELLOW))
+            else:
+                print(_c(f"\n  Session History ({len(session_log)} question(s))", _CYAN, _BOLD))
+                for i, (q, a) in enumerate(session_log, 1):
+                    print(_c(f"\n  [{i}] Q: ", _DIM) + q)
+                    preview = a[:200] + ("..." if len(a) > 200 else "")
+                    print(_c(f"      A: ", _DIM) + preview)
+                print()
+            continue
+
+        # ---- Standard Q&A flow ----------------------------------------
         _print_divider()
+        question_count += 1
 
         try:
-            # Step 1 — Retrieve relevant chunks from the vector store.
-            retrieved_chunks = store.similarity_search(user_input, top_k=TOP_K)
+            t_start = time.perf_counter()
 
-            # Optional debug view of retrieved context.
-            if debug:
-                print(f"🔍  [DEBUG] Retrieved {len(retrieved_chunks)} context chunk(s):\n")
-                for i, chunk in enumerate(retrieved_chunks, 1):
-                    print(f"  ┌── Chunk {i} ──────────────────────────────────────")
-                    print(f"  │  {chunk[:300].replace(chr(10), chr(10) + '  │  ')}")
-                    print(f"  └{'─' * 52}\n")
+            # Retrieve relevant chunks with scores.
+            results = store.similarity_search_with_scores(user_input, top_k=TOP_K)
+            retrieved_chunks = [r.chunk for r in results]
 
-            # Step 2 — Generate a grounded answer via Gemini RAG.
-            print("🤖  Answer:\n")
-            answer = generate_answer(user_input, retrieved_chunks, model)
+            # Debug view of retrieved context.
+            if debug and results:
+                print(_c(f"  [DEBUG] {len(results)} context chunk(s) retrieved:\n", _BLUE))
+                for i, r in enumerate(results, 1):
+                    print(_c(f"  Chunk {i}  (score: {r.score:.4f})", _BLUE))
+                    print(_c("  " + "─" * 55, _DIM))
+                    preview = r.chunk[:300].replace("\n", "\n  ")
+                    print(f"  {preview}")
+                    print()
+
+            # Generate grounded answer.
+            print(_c("  Answer:\n", _GREEN, _BOLD))
+            answer = generate_answer(
+                user_input, retrieved_chunks, model, history=history
+            )
+
+            elapsed = time.perf_counter() - t_start
+
+            # Print answer with word wrap.
             print(answer)
+            print()
+            print(_c(f"  [{elapsed:.2f}s | Q#{question_count} | history: {len(history)} turn(s)]", _DIM))
+
+            # Log to session history.
+            session_log.append((user_input, answer))
 
         except ValueError as exc:
-            print(f"⚠️  Input error: {exc}")
+            print(_c(f"  Input error: {exc}", _YELLOW))
         except RuntimeError as exc:
-            print(f"❌  API error: {exc}")
+            print(_c(f"  API error: {exc}", _RED))
         except Exception as exc:  # pylint: disable=broad-except
             logger.error("Unexpected error: %s", exc)
-            print(f"❌  An unexpected error occurred: {exc}")
+            print(_c(f"  Unexpected error: {exc}", _RED))
 
         _print_divider()
 
@@ -216,49 +279,63 @@ def run_chat_loop(
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="AI FAQ Assistant — RAG chatbot powered by Gemini + FAISS."
+    )
+    parser.add_argument(
+        "--debug", action="store_true",
+        help="Show retrieved context chunks per query.",
+    )
+    parser.add_argument(
+        "--rebuild", action="store_true",
+        help="Force rebuild of the FAISS index from knowledge.txt.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     """
-    Main function: loads environment, builds/loads index, starts chat loop.
+    Main function: load env, initialise Gemini and FAISS, start chat loop.
 
     Exit codes:
-        0  — Clean exit.
-        1  — Configuration or initialisation error.
+        0 — Clean exit.
+        1 — Configuration or initialisation error.
     """
     args = _get_args()
 
-    # Activate debug logging if requested.
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
-        print("🐛  Debug mode enabled.\n")
+        print(_c("  Debug mode enabled.\n", _BLUE))
 
-    # Load .env file.
+    # Load .env
     load_dotenv()
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print(
-            "❌  ERROR: GEMINI_API_KEY not found.\n"
-            "    Create a .env file in the project root:\n"
-            "    GEMINI_API_KEY=your_api_key_here"
-        )
+        print(_c(
+            "  ERROR: GEMINI_API_KEY not found.\n"
+            "  Create a .env file: GEMINI_API_KEY=your_key_here",
+            _RED
+        ))
         sys.exit(1)
 
-    # Initialise Gemini model.
+    # Initialise Gemini model
     try:
-        print("🚀  Initialising Gemini model …")
+        print(_c("\n  Initialising Gemini model ...", _YELLOW))
         gemini_model = initialise_gemini(api_key=api_key)
-        print("✅  Gemini model ready.\n")
+        print(_c("  Gemini ready.\n", _GREEN))
     except (EnvironmentError, RuntimeError) as exc:
-        print(f"❌  Gemini initialisation failed: {exc}")
+        print(_c(f"  Gemini init failed: {exc}", _RED))
         sys.exit(1)
 
-    # Initialise the vector store (load cache or build fresh).
+    # Initialise FAISS vector store
     try:
         vector_store = initialise_vector_store(rebuild=args.rebuild)
     except (FileNotFoundError, ValueError, RuntimeError) as exc:
-        print(f"❌  Vector store initialisation failed: {exc}")
+        print(_c(f"  Vector store init failed: {exc}", _RED))
         sys.exit(1)
 
-    # Start the interactive Q&A session.
+    # Launch chat
     run_chat_loop(vector_store, gemini_model, debug=args.debug)
 
 

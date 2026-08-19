@@ -3,9 +3,12 @@ embeddings.py
 -------------
 Handles text chunking and embedding generation using Google Gemini's
 text-embedding-004 model. Includes sliding-window chunking, batch
-embedding with rate-limit handling, and error resilience.
+embedding with rate-limit handling, live progress display, and
+error resilience.
 """
 
+import re
+import sys
 import time
 import logging
 from typing import Optional
@@ -21,6 +24,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Minimum number of characters a chunk must contain to be indexed.
+MIN_CHUNK_LENGTH: int = 30
+
+
+# ---------------------------------------------------------------------------
+# Text Cleaning
+# ---------------------------------------------------------------------------
+
+def clean_text(text: str) -> str:
+    """
+    Normalise raw text before chunking.
+
+    Improvements over raw input:
+    - Collapse runs of 3+ blank lines into two (one paragraph break).
+    - Strip trailing whitespace from every line.
+    - Remove zero-width and non-printable control characters.
+
+    Args:
+        text: Raw input string.
+
+    Returns:
+        Cleaned string ready for chunking.
+    """
+    # Remove zero-width spaces and non-printable control chars (keep \n, \t).
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\u200b\ufeff]", "", text)
+    # Strip trailing whitespace per line.
+    lines = [line.rstrip() for line in text.splitlines()]
+    text = "\n".join(lines)
+    # Collapse 3+ consecutive blank lines → 2.
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
 
 # ---------------------------------------------------------------------------
 # Text Chunking
@@ -32,12 +67,16 @@ def chunk_text(
     chunk_overlap: int = 50,
 ) -> list[str]:
     """
-    Split text into overlapping chunks using a sliding-window approach.
+    Split text into overlapping chunks using a paragraph-aware
+    sliding-window approach.
 
-    The function first attempts to split on paragraph boundaries (double
-    newlines) so that semantically coherent blocks are preserved. If a
-    paragraph block exceeds `chunk_size` characters, it is further split
-    character-by-character with overlap.
+    The function:
+    1. Cleans the text (normalises whitespace, removes control chars).
+    2. Splits on paragraph boundaries (double newlines) first so
+       semantically coherent blocks are preserved.
+    3. Falls back to character-level splitting with overlap for paragraphs
+       that exceed `chunk_size`.
+    4. Filters out chunks shorter than MIN_CHUNK_LENGTH characters.
 
     Args:
         text:          Raw input text to be chunked.
@@ -46,7 +85,8 @@ def chunk_text(
                        chunks to preserve context at boundaries.
 
     Returns:
-        A list of non-empty text chunk strings.
+        A list of non-empty text chunk strings, each at least
+        MIN_CHUNK_LENGTH characters long.
 
     Raises:
         ValueError: If chunk_size is not positive or overlap >= chunk_size.
@@ -59,41 +99,47 @@ def chunk_text(
             f"chunk_size ({chunk_size})."
         )
 
-    text = text.strip()
+    text = clean_text(text)
     if not text:
         logger.warning("chunk_text received an empty string; returning [].")
         return []
 
-    # ---- Step 1: split on paragraph boundaries first -----
+    # ---- Step 1: split on paragraph boundaries -------------------------
     paragraphs: list[str] = [p.strip() for p in text.split("\n\n") if p.strip()]
 
     chunks: list[str] = []
     current_chunk = ""
 
     for paragraph in paragraphs:
-        # If adding this paragraph keeps us within chunk_size, append it.
         candidate = (current_chunk + "\n\n" + paragraph).strip()
         if len(candidate) <= chunk_size:
             current_chunk = candidate
         else:
-            # Flush current_chunk if non-empty before processing long paragraph.
+            # Flush current buffer before processing the long paragraph.
             if current_chunk:
                 chunks.append(current_chunk)
                 current_chunk = ""
 
-            # If paragraph itself is larger than chunk_size, split it.
             if len(paragraph) > chunk_size:
+                # ---- Step 2: character-level split with overlap ---------
                 start = 0
                 while start < len(paragraph):
-                    end = start + chunk_size
+                    end = min(start + chunk_size, len(paragraph))
                     chunks.append(paragraph[start:end])
                     start += chunk_size - chunk_overlap
             else:
                 current_chunk = paragraph
 
-    # Flush any remaining text.
+    # Flush remaining text.
     if current_chunk:
         chunks.append(current_chunk)
+
+    # ---- Step 3: filter very short chunks ------------------------------
+    before = len(chunks)
+    chunks = [c for c in chunks if len(c) >= MIN_CHUNK_LENGTH]
+    filtered = before - len(chunks)
+    if filtered:
+        logger.info("Filtered out %d chunk(s) shorter than %d chars.", filtered, MIN_CHUNK_LENGTH)
 
     logger.info(
         "chunk_text produced %d chunks from %d characters "
@@ -104,6 +150,29 @@ def chunk_text(
         chunk_overlap,
     )
     return chunks
+
+
+# ---------------------------------------------------------------------------
+# Progress Bar (dependency-free)
+# ---------------------------------------------------------------------------
+
+def _print_progress(current: int, total: int, width: int = 35) -> None:
+    """
+    Print an in-place ASCII progress bar to stdout.
+
+    Args:
+        current: Number of items completed.
+        total:   Total number of items.
+        width:   Width of the bar in characters.
+    """
+    pct = current / total if total else 0
+    filled = int(width * pct)
+    bar = "█" * filled + "░" * (width - filled)
+    sys.stdout.write(f"\r     [{bar}] {current}/{total} ({pct*100:.0f}%)")
+    sys.stdout.flush()
+    if current >= total:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +203,7 @@ def get_embedding(
         A list of floats representing the embedding vector.
 
     Raises:
-        ValueError:  If the input text is empty.
+        ValueError:   If the input text is empty.
         RuntimeError: If the embedding API call fails after all retries.
     """
     text = text.strip()
@@ -150,7 +219,14 @@ def get_embedding(
                 content=text,
                 task_type=task_type,
             )
-            return result["embedding"]
+            embedding: list[float] = result["embedding"]
+
+            # Sanity-check: embedding must be a non-empty float list.
+            if not embedding or not isinstance(embedding[0], float):
+                raise ValueError(f"Unexpected embedding format: {type(embedding)}")
+
+            return embedding
+
         except Exception as exc:  # pylint: disable=broad-except
             last_error = exc
             wait = retry_delay * (2 ** (attempt - 1))
@@ -176,26 +252,25 @@ def get_embeddings_batch(
     task_type: str = "RETRIEVAL_DOCUMENT",
     batch_size: int = 5,
     inter_batch_delay: float = 1.0,
+    show_progress: bool = True,
 ) -> list[list[float]]:
     """
-    Generate embeddings for a list of texts with batching and rate-limit
-    handling.
-
-    Texts are embedded in small batches to avoid hitting API rate limits.
-    A short delay is inserted between batches.
+    Generate embeddings for a list of texts with batching, rate-limit
+    handling, and a live progress bar.
 
     Args:
         texts:              List of input strings to embed.
         model:              Gemini embedding model identifier.
         task_type:          Embedding task type hint.
-        batch_size:         Number of texts to embed per API call batch.
+        batch_size:         Number of texts to embed per batch.
         inter_batch_delay:  Seconds to wait between batches.
+        show_progress:      If True, display a live progress bar.
 
     Returns:
         A list of embedding vectors in the same order as `texts`.
 
     Raises:
-        ValueError:  If `texts` is empty.
+        ValueError:   If `texts` is empty.
         RuntimeError: If any individual embedding call fails.
     """
     if not texts:
@@ -205,18 +280,16 @@ def get_embeddings_batch(
     total = len(texts)
 
     for batch_start in range(0, total, batch_size):
-        batch = texts[batch_start : batch_start + batch_size]
-        logger.info(
-            "Embedding batch %d–%d of %d texts…",
-            batch_start + 1,
-            min(batch_start + batch_size, total),
-            total,
-        )
+        batch = texts[batch_start: batch_start + batch_size]
+
         for text in batch:
             embedding = get_embedding(text, model=model, task_type=task_type)
             all_embeddings.append(embedding)
 
-        # Rate-limit pause between batches (not after the last one).
+            if show_progress:
+                _print_progress(len(all_embeddings), total)
+
+        # Rate-limit pause between batches (skip after the last batch).
         if batch_start + batch_size < total:
             time.sleep(inter_batch_delay)
 
