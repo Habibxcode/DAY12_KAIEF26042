@@ -24,11 +24,9 @@ Special commands inside the chat loop:
 
 import argparse
 import datetime
-import itertools
 import logging
 import os
 import sys
-import threading
 import time
 
 from dotenv import load_dotenv
@@ -106,38 +104,6 @@ def _print_help() -> None:
   !clear    Clear conversation history
   exit/quit Close the assistant
 """, _CYAN))
-
-
-class _Spinner:
-    """
-    A lightweight terminal spinner shown while the API call is in progress.
-    Runs on a background thread and is stopped via context-manager.
-    """
-    _FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-
-    def __init__(self, message: str = "  Thinking") -> None:
-        self._message = message
-        self._stop_event = threading.Event()
-        self._thread = threading.Thread(target=self._spin, daemon=True)
-
-    def _spin(self) -> None:
-        for frame in itertools.cycle(self._FRAMES):
-            if self._stop_event.is_set():
-                break
-            sys.stdout.write(f"\r{_c(self._message, _DIM)} {_c(frame, _CYAN)}")
-            sys.stdout.flush()
-            time.sleep(0.1)
-        # Clear the spinner line.
-        sys.stdout.write("\r" + " " * (len(self._message) + 4) + "\r")
-        sys.stdout.flush()
-
-    def __enter__(self) -> "_Spinner":
-        self._thread.start()
-        return self
-
-    def __exit__(self, *_) -> None:
-        self._stop_event.set()
-        self._thread.join()
 
 
 # ---------------------------------------------------------------------------
@@ -353,12 +319,11 @@ def run_chat_loop(
                     print(f"  {preview}")
                     print()
 
-            # Generate grounded answer (with spinner while waiting).
+            # Generate grounded answer.
             print(_c("  Answer:\n", _GREEN, _BOLD))
-            with _Spinner("  Thinking"):
-                answer = generate_answer(
-                    user_input, retrieved_chunks, model, history=history
-                )
+            answer = generate_answer(
+                user_input, retrieved_chunks, model, history=history
+            )
 
             elapsed = time.perf_counter() - t_start
 
