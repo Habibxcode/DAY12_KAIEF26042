@@ -313,7 +313,7 @@ pro-rated for employees who join mid-year.
 
 ---
 
-### ✅ Multi-fact health benefits query
+###  Multi-fact health benefits query
 
 ```
 ❓ Your question: What does the health plan cover for dental and vision?
@@ -326,7 +326,7 @@ Based on Section 5.1, the company health plan includes:
 
 ---
 
-### ✅ Travel reimbursement boundary
+###  Travel reimbursement boundary
 
 ```
 ❓ Your question: Can I expense alcohol during a business trip?
