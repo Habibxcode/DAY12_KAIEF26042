@@ -17,14 +17,18 @@ Special commands inside the chat loop:
     !help     — Show available commands
     !history  — Print this session's Q&A history
     !stats    — Show vector store statistics
+    !save     — Export session Q&A to a timestamped .txt file
     !clear    — Clear conversation history
     exit/quit — Exit the assistant
 """
 
 import argparse
+import datetime
+import itertools
 import logging
 import os
 import sys
+import threading
 import time
 
 from dotenv import load_dotenv
@@ -98,9 +102,42 @@ def _print_help() -> None:
   !help     Show this help message
   !history  Print session Q&A history
   !stats    Show vector index statistics
+  !save     Export session history to file
   !clear    Clear conversation history
   exit/quit Close the assistant
 """, _CYAN))
+
+
+class _Spinner:
+    """
+    A lightweight terminal spinner shown while the API call is in progress.
+    Runs on a background thread and is stopped via context-manager.
+    """
+    _FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
+    def __init__(self, message: str = "  Thinking") -> None:
+        self._message = message
+        self._stop_event = threading.Event()
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+
+    def _spin(self) -> None:
+        for frame in itertools.cycle(self._FRAMES):
+            if self._stop_event.is_set():
+                break
+            sys.stdout.write(f"\r{_c(self._message, _DIM)} {_c(frame, _CYAN)}")
+            sys.stdout.flush()
+            time.sleep(0.1)
+        # Clear the spinner line.
+        sys.stdout.write("\r" + " " * (len(self._message) + 4) + "\r")
+        sys.stdout.flush()
+
+    def __enter__(self) -> "_Spinner":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_) -> None:
+        self._stop_event.set()
+        self._thread.join()
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +197,33 @@ def initialise_vector_store(rebuild: bool = False) -> FAISSVectorStore:
 # Chat loop
 # ---------------------------------------------------------------------------
 
+def _save_session(session_log: list[tuple[str, str]]) -> None:
+    """
+    Export the current session's Q&A pairs to a timestamped .txt file
+    in the project directory.
+
+    Args:
+        session_log: List of (question, answer) tuples from this session.
+    """
+    if not session_log:
+        print(_c("  Nothing to save — no questions asked yet.\n", _YELLOW))
+        return
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join(BASE_DIR, f"session_{timestamp}.txt")
+
+    with open(filename, "w", encoding="utf-8") as fp:
+        fp.write("AI FAQ Assistant — Session Export\n")
+        fp.write(f"Exported: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        fp.write("=" * 60 + "\n\n")
+        for i, (q, a) in enumerate(session_log, 1):
+            fp.write(f"Q{i}: {q}\n")
+            fp.write(f"A{i}: {a}\n")
+            fp.write("-" * 60 + "\n\n")
+
+    print(_c(f"  Session saved to: {os.path.basename(filename)}\n", _GREEN))
+
+
 def run_chat_loop(
     store: FAISSVectorStore,
     model,
@@ -177,8 +241,18 @@ def run_chat_loop(
     history = ConversationHistory(max_turns=5)
     session_log: list[tuple[str, str]] = []  # (question, answer) pairs
     question_count = 0
+    blank_streak = 0            # Counts consecutive empty inputs.
+    MAX_BLANK_STREAK = 3        # Warn user after this many blanks in a row.
 
     _print_banner()
+
+    # Print a quick startup summary.
+    stats = store.get_stats()
+    print(_c(
+        f"  Index ready: {stats['total_chunks']} chunks "
+        f"| dim={stats['dimension']} | {stats['index_type']}\n",
+        _DIM,
+    ))
 
     while True:
         try:
@@ -193,8 +267,18 @@ def run_chat_loop(
             break
 
         if not user_input:
-            print(_c("  Please enter a question or type !help.\n", _YELLOW))
+            blank_streak += 1
+            if blank_streak >= MAX_BLANK_STREAK:
+                print(_c(
+                    f"  Tip: type a question, or '!help' for commands, "
+                    f"or 'exit' to quit.\n", _YELLOW
+                ))
+                blank_streak = 0
+            else:
+                print(_c("  Please enter a question or type !help.\n", _YELLOW))
             continue
+
+        blank_streak = 0  # Reset streak on any real input.
 
         if user_input.lower() == "!help":
             _print_help()
@@ -207,11 +291,24 @@ def run_chat_loop(
             print(_c("  Conversation history cleared.\n", _GREEN))
             continue
 
+        if user_input.lower() == "!save":
+            _save_session(session_log)
+            continue
+
         if user_input.lower() == "!stats":
             stats = store.get_stats()
+            labels = {
+                "ready":         "Status",
+                "total_chunks":  "Indexed Chunks",
+                "dimension":     "Embedding Dim",
+                "index_type":    "FAISS Index Type",
+                "avg_chunk_len": "Avg Chunk Length (chars)",
+            }
             print(_c("\n  Vector Store Statistics", _CYAN, _BOLD))
             for key, val in stats.items():
-                print(f"    {_c(key, _DIM)}: {val}")
+                label = labels.get(key, key)
+                display = _c(str(val), _GREEN if val else _RED)
+                print(f"    {_c(label, _DIM):<28} {display}")
             print()
             continue
 
@@ -225,6 +322,14 @@ def run_chat_loop(
                     preview = a[:200] + ("..." if len(a) > 200 else "")
                     print(_c(f"      A: ", _DIM) + preview)
                 print()
+            continue
+
+        # Catch unknown ! commands before they reach the search pipeline.
+        if user_input.startswith("!"):
+            print(_c(
+                f"  Unknown command '{user_input}'. Type !help for available commands.\n",
+                _YELLOW
+            ))
             continue
 
         # ---- Standard Q&A flow ----------------------------------------
@@ -248,18 +353,23 @@ def run_chat_loop(
                     print(f"  {preview}")
                     print()
 
-            # Generate grounded answer.
+            # Generate grounded answer (with spinner while waiting).
             print(_c("  Answer:\n", _GREEN, _BOLD))
-            answer = generate_answer(
-                user_input, retrieved_chunks, model, history=history
-            )
+            with _Spinner("  Thinking"):
+                answer = generate_answer(
+                    user_input, retrieved_chunks, model, history=history
+                )
 
             elapsed = time.perf_counter() - t_start
 
-            # Print answer with word wrap.
+            # Print answer.
             print(answer)
             print()
-            print(_c(f"  [{elapsed:.2f}s | Q#{question_count} | history: {len(history)} turn(s)]", _DIM))
+            print(_c(
+                f"  [{elapsed:.2f}s | Q#{question_count} | "
+                f"history: {len(history)} turn(s) | !save to export]",
+                _DIM,
+            ))
 
             # Log to session history.
             session_log.append((user_input, answer))
