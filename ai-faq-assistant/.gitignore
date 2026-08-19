@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment secrets — NEVER commit this
+.env
+
+# FAISS index cache (auto-generated on first run)
+faiss_store/
+
+# IDE / editor configs
+.vscode/
+.idea/
+*.swp
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Distribution
+dist/
+build/
+*.egg-info/

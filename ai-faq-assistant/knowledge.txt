@@ -1,0 +1,216 @@
+====================================================================
+ACME CORPORATION — EMPLOYEE POLICY & FAQ KNOWLEDGE BASE (v2025)
+====================================================================
+
+SECTION 1: WORKING HOURS & ATTENDANCE
+--------------------------------------
+1.1 Standard Working Hours
+All full-time employees are expected to work a minimum of 40 hours per week. Standard office hours are 9:00 AM to 6:00 PM, Monday through Friday, with a one-hour unpaid lunch break. Employees in engineering, design, and product roles may operate on flexible schedules (flexitime), provided they attend all required meetings and maintain their weekly hour commitment.
+
+1.2 Remote Work Policy
+Employees are entitled to work remotely up to 3 days per week, subject to manager approval. Fully remote arrangements must be pre-approved by the department head and HR. Remote employees must be reachable during core collaboration hours (11:00 AM – 3:00 PM local timezone). All remote work sessions must be logged in the company attendance system.
+
+1.3 Overtime Policy
+Overtime hours (beyond 40 hours per week) must be pre-approved in writing by the employee's direct manager. Approved overtime is compensated at 1.5x the regular hourly rate for hours between 40–50 per week and 2.0x for hours beyond 50. Unauthorized overtime will not be compensated and may result in disciplinary action.
+
+1.4 Leave Entitlement
+- Annual Leave: 25 working days per calendar year (pro-rated for new joiners).
+- Sick Leave: Up to 15 days per year with a valid medical certificate.
+- Casual Leave: 10 days per year for personal emergencies; may not be carried forward.
+- Maternity Leave: 16 weeks fully paid leave; extendable by 4 weeks unpaid.
+- Paternity Leave: 4 weeks fully paid leave.
+- Bereavement Leave: 5 days for immediate family (spouse, child, parent, sibling).
+- Unpaid Leave: Approved on case-by-case basis by HR; maximum 90 days per year.
+
+1.5 Public Holidays
+Acme Corporation observes all national public holidays as declared by the federal government. In addition, employees receive 2 floating holidays per year which may be used for personal, religious, or cultural observances.
+
+======================================================================
+
+SECTION 2: TRAVEL REIMBURSEMENT POLICY
+----------------------------------------
+2.1 Eligible Travel Expenses
+The company reimburses employees for pre-approved business travel expenses including:
+- Economy class airfare (domestic and international).
+- Hotel accommodation up to $200/night for domestic travel and $350/night for international travel.
+- Ground transportation: taxis, rideshares, car rentals (economy class only).
+- Meals: up to $50/day for domestic trips and $80/day for international trips.
+- Conference registration fees with manager pre-approval.
+
+2.2 Non-Reimbursable Expenses
+The following expenses will NOT be reimbursed:
+- Business class or first-class flights (unless pre-approved for flights exceeding 8 hours).
+- Alcohol or personal entertainment expenses.
+- Spa treatments, gym fees, or personal upgrades.
+- Expenses incurred by a spouse or non-employee travel companion.
+- Personal shopping or souvenirs.
+- Traffic fines, parking violations, or penalties.
+
+2.3 Expense Reporting Procedure
+All travel expenses must be submitted within 14 calendar days of returning from the trip using the company's expense portal (expenses.acmecorp.internal). Receipts are required for all individual expenses above $25. Expenses submitted after 30 days will not be reimbursed without exceptional written approval from the CFO.
+
+2.4 Travel Advance
+Employees may request a travel advance of up to 80% of estimated trip costs at least 5 business days before departure. Advances must be reconciled with actual expenses within 7 days of returning. Unreconciled advances will be deducted from the next paycheck.
+
+2.5 International Travel Requirements
+For all international travel, employees must:
+- Obtain manager and HR approval at least 10 business days in advance.
+- Register their travel itinerary with the corporate travel management system.
+- Carry the company travel insurance card (issued by HR upon request).
+- Comply with visa and immigration requirements of the destination country.
+
+======================================================================
+
+SECTION 3: EQUIPMENT & TECHNOLOGY ALLOWANCE
+---------------------------------------------
+3.1 Standard Equipment Provision
+Upon joining, each full-time employee receives:
+- One laptop (Windows or Mac, based on role requirements).
+- A docking station and dual-monitor setup for office workstations.
+- Noise-cancelling headphones for collaboration.
+- Standard licensed software suite (Office 365, Slack, Zoom, etc.).
+
+3.2 Equipment Upgrade Policy
+Laptops are eligible for replacement every 3 years. Employees requiring earlier upgrades due to hardware failure must submit a support ticket to IT. If damage is due to employee negligence, the repair or replacement cost may be partially or fully borne by the employee (assessed case-by-case by HR and IT).
+
+3.3 Home Office Setup Allowance
+Newly hired remote or hybrid employees receive a one-time home office setup allowance of $500 to cover ergonomic furniture, peripherals, or connectivity needs. This allowance must be claimed within 60 days of the hire date and is non-transferable and non-cashable.
+
+3.4 Personal Device Usage (BYOD)
+Employees using personal devices for work must enroll them in the company's Mobile Device Management (MDM) system. The IT department must be notified and grant access. BYOD devices must have company-approved security software installed. Sensitive company data may not be stored on personal devices without encryption.
+
+3.5 Software & Subscription Requests
+Employees can request additional software tools or subscriptions through the IT service desk. All software must pass a security review before installation. The annual software budget per employee is $300 for individual productivity tools.
+
+======================================================================
+
+SECTION 4: CODE OF CONDUCT & WORKPLACE ETHICS
+------------------------------------------------
+4.1 Professional Standards
+All Acme Corporation employees are expected to:
+- Maintain professionalism, integrity, and respect in all interactions.
+- Uphold company confidentiality and data privacy obligations.
+- Avoid conflicts of interest and disclose any potential conflicts to HR promptly.
+- Not engage in any form of discrimination, harassment, or bullying.
+
+4.2 Anti-Harassment Policy
+Acme Corporation maintains a zero-tolerance policy for harassment of any kind, including sexual harassment, racial discrimination, verbal abuse, and workplace bullying. All complaints must be reported to the HR department or through the anonymous ethics hotline (ethics@acmecorp.com). All reports will be investigated within 10 business days.
+
+4.3 Social Media & Public Communication Policy
+Employees must not post confidential company information, financial data, or client details on social media platforms. When representing the company publicly (conferences, media, LinkedIn), employees must seek Communications team approval for any official statements. Personal opinions shared on social media must not be attributed to the company.
+
+4.4 Conflicts of Interest
+Employees must disclose to HR any outside employment, investment, or business relationships that could conflict with Acme's interests. Participating in a competing business while employed at Acme, even informally, is strictly prohibited and constitutes grounds for immediate termination.
+
+4.5 Gifts & Entertainment Policy
+Employees may accept gifts valued at no more than $50. Gifts exceeding this value must be disclosed to and approved by HR. Offering or accepting gifts in exchange for business decisions or preferential treatment constitutes bribery and will result in immediate dismissal and possible legal action.
+
+4.6 Intellectual Property
+All work products, code, designs, documents, and inventions created during employment or using company resources are the intellectual property of Acme Corporation, regardless of whether the work was done during office hours.
+
+======================================================================
+
+SECTION 5: HEALTH INSURANCE & WELLNESS BENEFITS
+--------------------------------------------------
+5.1 Health Insurance Coverage
+Acme Corporation provides comprehensive group health insurance to all full-time employees effective from the first day of employment. The plan includes:
+- Hospitalization coverage up to $500,000 per year.
+- Outpatient consultations with a $10 co-pay per visit.
+- Prescription drugs coverage at 80% of cost.
+- Emergency room visits fully covered with no co-pay.
+- Mental health and counseling services: up to 20 sessions per year.
+- Dental coverage: annual maximum of $2,000 per employee.
+- Vision coverage: $300 per year for glasses or contact lenses.
+
+5.2 Dependent Coverage
+Employees may enroll their legal spouse and children under the age of 26 under the company health plan. Dependent premiums are shared: the company covers 70% and the employee covers 30% through payroll deduction. Enrollment changes can only be made during the annual open enrollment period (October 1–31) or within 30 days of a qualifying life event (marriage, birth, divorce).
+
+5.3 Wellness Stipend
+All employees receive an annual Wellness Stipend of $600 that can be used for:
+- Gym or fitness center memberships.
+- Yoga, meditation, or wellness apps (e.g., Calm, Headspace).
+- Sports equipment or fitness classes.
+- Nutrition counseling or dietitian consultations.
+Claims must be submitted via the HR portal with receipts. Unused stipend does not roll over to the next year.
+
+5.4 Employee Assistance Program (EAP)
+Acme Corporation partners with LifeCare Solutions to provide a confidential Employee Assistance Program. All employees and their immediate family members can access:
+- Free counseling (up to 8 sessions/year).
+- Financial planning consultation.
+- Legal advisory services.
+- Crisis intervention and mental health support.
+The EAP is available 24/7 by calling 1-800-ACME-CARE or via the EAP portal (eap.acmecorp.internal).
+
+5.5 Parental Health Support
+New parents (within 6 months of birth or adoption) are entitled to:
+- A dedicated 30-minute wellness check-in with HR per month.
+- Access to lactation rooms (in-office).
+- Backup childcare support through our daycare partner network (up to 10 days/year).
+
+5.6 Preventive Care
+The health plan covers 100% of the cost for preventive screenings including annual physicals, flu shots, mammograms, cholesterol checks, blood pressure monitoring, and colorectal cancer screenings as recommended by age guidelines.
+
+======================================================================
+
+SECTION 6: PERFORMANCE REVIEWS & COMPENSATION
+-----------------------------------------------
+6.1 Performance Review Cycle
+Performance reviews are conducted twice yearly:
+- Mid-year review: July (formative feedback and goal realignment).
+- Annual review: December (summative evaluation, rating, and compensation decisions).
+
+Employees are expected to complete a self-assessment prior to each review cycle using the company performance management platform (perf.acmecorp.internal).
+
+6.2 Performance Ratings
+Employees receive one of five performance ratings:
+1. Exceptional (5) – Significantly exceeds all goals.
+2. Exceeds Expectations (4) – Consistently surpasses targets.
+3. Meets Expectations (3) – Achieves all stated goals.
+4. Needs Improvement (2) – Partially meets goals; improvement plan required.
+5. Unsatisfactory (1) – Fails to meet goals; may result in termination.
+
+6.3 Merit-Based Salary Increases
+Annual salary increases are based on performance ratings:
+- Rating 5 (Exceptional): 10–15% salary increase.
+- Rating 4 (Exceeds Expectations): 6–9% salary increase.
+- Rating 3 (Meets Expectations): 3–5% salary increase.
+- Rating 2 (Needs Improvement): 0–2% increase (no guaranteed raise).
+- Rating 1 (Unsatisfactory): No increase; possible termination.
+
+6.4 Bonuses
+Annual performance bonuses are awarded based on individual performance rating and company financial performance:
+- Employees rated 4 or 5 are eligible for a bonus of 10–25% of annual salary.
+- Employees rated 3 are eligible for a 5% bonus.
+- Employees rated 1 or 2 are not eligible for bonuses.
+
+6.5 Promotion Policy
+Promotions are based on sustained high performance (rating 4 or 5 for two consecutive cycles), business need, and skill assessment. Employees must also complete all required learning and development goals for the target level. Promotion decisions are made during the annual review cycle in December.
+
+======================================================================
+
+SECTION 7: ONBOARDING & OFFBOARDING
+--------------------------------------
+7.1 New Employee Onboarding
+The first week of employment follows a structured onboarding program:
+- Day 1: IT setup, building access, HR orientation.
+- Day 2–3: Department-specific onboarding with team lead.
+- Day 4–5: Company culture sessions, compliance training, tool walkthroughs.
+All new employees must complete mandatory compliance training (data privacy, security awareness, and code of conduct) within the first 30 days.
+
+7.2 Probationary Period
+All new hires serve a 90-day probationary period during which performance is closely monitored. Termination during probation requires only 1 week's notice. Post-probation, the standard notice period of 4 weeks applies.
+
+7.3 Resignation Procedure
+Employees wishing to resign must submit written notice to their manager and HR. Notice period: 4 weeks (standard), 6 weeks (manager/senior roles), 8 weeks (director level and above). Exit interviews are conducted by HR within the final week of employment.
+
+7.4 Offboarding Checklist
+Before the last working day, departing employees must:
+- Return all company equipment (laptop, access cards, peripherals).
+- Transfer knowledge and hand over ongoing projects to designated team members.
+- Complete exit interview with HR.
+- Ensure all expense reports are submitted and reconciled.
+Final paychecks including any accrued leave encashment are processed within 7 days of the last working day.
+
+======================================================================
+END OF DOCUMENT
+====================================================================
