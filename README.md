@@ -1,10 +1,10 @@
-# 🤖 AI FAQ Assistant — Modular RAG System
+#  AI FAQ Assistant — Modular RAG System
 
 > A **production-grade Retrieval-Augmented Generation (RAG) chatbot** that answers employee FAQ questions strictly from a curated knowledge base — powered by **Google Gemini** for embeddings & generation and **FAISS** for blazing-fast vector similarity search.
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Project Overview](#-project-overview)
 - [Architecture](#-architecture)
@@ -21,7 +21,7 @@
 
 ---
 
-## 🌟 Project Overview
+##  Project Overview
 
 The **AI FAQ Assistant** is a modular Retrieval-Augmented Generation (RAG) system built for enterprise internal use. It processes a rich knowledge base (`knowledge.txt`) and answers employee questions with high accuracy — referencing only the grounded context, never hallucinating.
 
@@ -29,17 +29,17 @@ It covers **seven company policy domains**:
 
 | # | Domain |
 |---|---|
-| 1 | 🕐 Working Hours & Attendance |
-| 2 | ✈️ Travel Reimbursement |
-| 3 | 💻 Equipment & Technology Allowance |
-| 4 | ⚖️ Code of Conduct & Workplace Ethics |
-| 5 | 🏥 Health Insurance & Wellness Benefits |
-| 6 | 📊 Performance Reviews & Compensation |
-| 7 | 🚪 Onboarding & Offboarding |
+| 1 |  Working Hours & Attendance |
+| 2 |  Travel Reimbursement |
+| 3 |  Equipment & Technology Allowance |
+| 4 |  Code of Conduct & Workplace Ethics |
+| 5 |  Health Insurance & Wellness Benefits |
+| 6 |  Performance Reviews & Compensation |
+| 7 |  Onboarding & Offboarding |
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ### RAG Pipeline — Indexing Phase (one-time)
 
@@ -59,7 +59,7 @@ vectorstore.py ─► FAISSVectorStore.build_index()
                   (IndexFlatIP + L2 normalisation = cosine similarity)
      │
      ▼
-💾  faiss_store/index.faiss  +  faiss_store/chunks.json  (cached to disk)
+  faiss_store/index.faiss  +  faiss_store/chunks.json  (cached to disk)
 ```
 
 ### RAG Pipeline — Inference Phase (per query)
@@ -106,24 +106,24 @@ Grounded Answer ──► CLI Output
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 | Feature | Description |
 |---|---|
-| 🛡️ **Zero-Hallucination Guard** | Strict system prompt enforces answers only from retrieved context |
-| ⚡ **FAISS Vector Search** | Sub-millisecond cosine similarity via L2-normalized `IndexFlatIP` |
-| 🔢 **Gemini Embeddings** | `text-embedding-004` for high-quality semantic representations |
-| 🧩 **Modular Architecture** | Clean separation: chunking → embedding → vector store → generation |
-| 💾 **Index Caching** | FAISS index persisted to disk — rebuilds only when needed |
-| 🔄 **Batch Embedding** | Rate-limit-safe batching with exponential back-off retry logic |
-| 🐛 **Debug Mode** | `--debug` flag exposes retrieved chunks for full transparency |
-| 🔁 **Force Rebuild** | `--rebuild` flag to regenerate the index from scratch |
-| 🌡️ **Low Temperature** | Gemini at `temperature=0.1` for factual, low-variance responses |
-| 🔁 **Model Fallback** | Auto-falls back from `gemini-2.5-flash` → `gemini-1.5-flash` |
+|  **Zero-Hallucination Guard** | Strict system prompt enforces answers only from retrieved context |
+|  **FAISS Vector Search** | Sub-millisecond cosine similarity via L2-normalized `IndexFlatIP` |
+|  **Gemini Embeddings** | `text-embedding-004` for high-quality semantic representations |
+|  **Modular Architecture** | Clean separation: chunking → embedding → vector store → generation |
+|  **Index Caching** | FAISS index persisted to disk — rebuilds only when needed |
+|  **Batch Embedding** | Rate-limit-safe batching with exponential back-off retry logic |
+|  **Debug Mode** | `--debug` flag exposes retrieved chunks for full transparency |
+|  **Force Rebuild** | `--rebuild` flag to regenerate the index from scratch |
+|  **Low Temperature** | Gemini at `temperature=0.1` for factual, low-variance responses |
+|  **Model Fallback** | Auto-falls back from `gemini-2.5-flash` → `gemini-1.5-flash` |
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 DAY12_KAIEF26042/
@@ -203,7 +203,7 @@ Orchestrates the full lifecycle:
 
 ---
 
-## ⚙️ Prerequisites
+##  Prerequisites
 
 - **Python 3.10+** — required for built-in `list[str]` type hints
 - **Google Gemini API Key** — get one free at [Google AI Studio](https://aistudio.google.com/app/apikey)
@@ -211,7 +211,7 @@ Orchestrates the full lifecycle:
 
 ---
 
-## 🚀 Installation
+##  Installation
 
 ### 1. Clone the repository
 
@@ -240,7 +240,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🔑 Environment Configuration
+##  Environment Configuration
 
 Copy the example file and add your API key:
 
@@ -258,11 +258,11 @@ Open `.env` and fill in your key:
 GEMINI_API_KEY=AIzaSy...your_actual_key_here...
 ```
 
-> ⚠️ **Security**: Never commit `.env` to version control. It is already listed in `.gitignore`.
+>  **Security**: Never commit `.env` to version control. It is already listed in `.gitignore`.
 
 ---
 
-## 💬 Usage Guide
+##  Usage Guide
 
 ### Standard run
 
@@ -375,7 +375,7 @@ The key principle: the model **never answers from its pre-trained knowledge alon
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 | Package | Version | Purpose |
 |---|---|---|
