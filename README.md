@@ -298,9 +298,9 @@ python app.py --rebuild
 
 ---
 
-## 💡 Sample Interactions
+##  Sample Interactions
 
-### ✅ Grounded policy answer
+### Grounded policy answer
 
 ```
 ❓ Your question: How many days of annual leave do employees get?
@@ -339,7 +339,7 @@ reimbursed by the company.
 
 ---
 
-### ✅ Graceful refusal — out-of-scope question
+### Graceful refusal — out-of-scope question
 
 ```
 ❓ Your question: What is the company's stock price today?
@@ -350,7 +350,7 @@ I am sorry, but that information is not available in the knowledge base.
 
 ---
 
-## 🔄 How RAG Works Here
+##  How RAG Works Here
 
 ```
 User Query
