@@ -149,7 +149,7 @@ DAY12_KAIEF26042/
 
 ---
 
-## 🔍 Module Breakdown
+##  Module Breakdown
 
 ### `knowledge.txt`
 A richly detailed **7-section company policy document** covering leave entitlements, travel reimbursement limits, equipment allowances, code of conduct, health insurance, performance ratings, salary increases, and offboarding procedures.
